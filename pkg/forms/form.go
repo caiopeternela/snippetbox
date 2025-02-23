@@ -3,6 +3,7 @@ package forms
 import (
 	"fmt"
 	"net/url"
+	"net/mail"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -29,6 +30,16 @@ func (f *Form) Required(fields ...string) {
 	}
 }
 
+func (f *Form) MinLength(field string, d int) {
+	value := f.Get(field)
+	if value == "" {
+		return
+	}
+	if utf8.RuneCountInString(value) < d {
+		f.Errors.Add(field, fmt.Sprintf("This field is too short (minimum is %d characters)", d))
+	}
+}
+
 func (f *Form) MaxLength(field string, d int) {
 	value := f.Get(field)
 	if value == "" {
@@ -48,6 +59,17 @@ func (f *Form) PermittedValues(field string, opts ...string) {
 		return
 	}
 	f.Errors.Add(field, "This field is invalid")
+}
+
+func (f *Form) IsInstance(field string) {
+    if field == "email" {
+        value := f.Get(field)
+        _, err := mail.ParseAddress(value)
+        if err != nil {
+            f.Errors.Add(field, "This field is invalid")
+        }
+    }
+    return
 }
 
 func (f *Form) Valid() bool {
